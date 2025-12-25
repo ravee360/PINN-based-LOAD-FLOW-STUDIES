@@ -81,34 +81,80 @@ The baseline model achieves very high numerical accuracy due to the low variance
 
 ### 2️⃣ Physics-Informed Neural Network (PINN)
 
-To improve physical consistency, a **physics-based constraint** is embedded into the neural network training process.
+## 🔬 Physics Constraint Used (PINN Formulation)
 
-#### Physics Constraint Used
-Since voltage angles are unavailable, a simplified reactive power balance equation is adopted:
+To embed power system physics into the learning process, a **voltage-only physics constraint** is incorporated into the Physics-Informed Neural Network (PINN).  
+Since voltage angle information is unavailable, a simplified **reactive power balance constraint** based on the imaginary part of the Y-bus matrix is adopted.
 
-\[
-Q + V(BV) \approx 0
-\]
+### 🔹 Reactive Power Balance Constraint
 
-Where:
-- \( Q \) → Reactive power injection vector  
-- \( V \) → Predicted voltage magnitude vector  
-- \( B \) → Imaginary part of the Y-bus matrix  
+The reactive power relationship is expressed as:
 
-#### PINN Loss Function
+$$
+\mathbf{Q} + \mathbf{V} \odot (\mathbf{B}\mathbf{V}) \approx \mathbf{0}
+$$
 
-\[
-\mathcal{L} =
-\underbrace{\| V_{pred} - V_{true} \|^2}_{\text{Data Loss}}
-+
-\lambda
-\underbrace{\| Q + V(BV) \|^2}_{\text{Physics Loss}}
-\]
+where:
 
-- **λ (physics weight):** ≈ \(10^{-3}\)
-- Physics loss is active from the first epoch
+- $\mathbf{Q} \in \mathbb{R}^{33}$  
+  Reactive power injection vector  
+- $\mathbf{V} \in \mathbb{R}^{33}$  
+  Voltage magnitude vector predicted by the neural network  
+- $\mathbf{B} \in \mathbb{R}^{33 \times 33}$  
+  Imaginary part (susceptance matrix) of the Y-bus  
+- $\odot$  
+  Element-wise (Hadamard) product  
+
+This constraint enforces physical consistency between predicted voltages and reactive power behavior of the distribution network.
 
 ---
+
+## ⚙️ PINN Loss Function
+
+The PINN is trained using a **composite loss function** that combines data accuracy with physics enforcement:
+
+$$
+\mathcal{L}
+=
+\underbrace{
+\frac{1}{N}
+\sum_{i=1}^{N}
+\left\|
+\mathbf{V}_{\text{pred}}^{(i)} -
+\mathbf{V}_{\text{true}}^{(i)}
+\right\|_2^2
+}_{\text{Data Loss}}
++
+\lambda
+\underbrace{
+\frac{1}{N}
+\sum_{i=1}^{N}
+\left\|
+\mathbf{Q}^{(i)} +
+\mathbf{V}_{\text{pred}}^{(i)} \odot
+\left(
+\mathbf{B}\mathbf{V}_{\text{pred}}^{(i)}
+\right)
+\right\|_2^2
+}_{\text{Physics Loss}}
+$$
+
+where:
+
+- $N$ — number of training samples  
+- $\lambda$ — physics weighting coefficient (typically $\lambda \approx 10^{-3}$)  
+- $\mathbf{V}_{\text{pred}}$ — predicted voltage magnitudes  
+- $\mathbf{V}_{\text{true}}$ — ground-truth voltage magnitudes  
+
+---
+
+## ✅ Interpretation
+
+- **Data Loss** ensures high numerical accuracy with respect to measured voltages.  
+- **Physics Loss** penalizes violations of the reactive power balance constraint.  
+- Joint minimization guides the network toward a **physics-consistent solution manifold**, improving reliability and interpretability.
+
+This formulation enables robust voltage magnitude estimation even in the absence of voltage angle information.
 
 ## 🔌 Y-Bus Matrix Extraction
 
