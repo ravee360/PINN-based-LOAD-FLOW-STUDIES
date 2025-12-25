@@ -114,29 +114,7 @@ This constraint enforces physical consistency between predicted voltages and rea
 The PINN is trained using a **composite loss function** that combines data accuracy with physics enforcement:
 
 $$
-\mathcal{L}
-=
-\underbrace{
-\frac{1}{N}
-\sum_{i=1}^{N}
-\left\|
-\mathbf{V}_{\text{pred}}^{(i)} -
-\mathbf{V}_{\text{true}}^{(i)}
-\right\|_2^2
-}_{\text{Data Loss}}
-+
-\lambda
-\underbrace{
-\frac{1}{N}
-\sum_{i=1}^{N}
-\left\|
-\mathbf{Q}^{(i)} +
-\mathbf{V}_{\text{pred}}^{(i)} \odot
-\left(
-\mathbf{B}\mathbf{V}_{\text{pred}}^{(i)}
-\right)
-\right\|_2^2
-}_{\text{Physics Loss}}
+\mathcal{L} = \frac{1}{N} \sum_{i=1}^{N} \left\| \mathbf{V}_{\text{pred}}^{(i)} - \mathbf{V}_{\text{true}}^{(i)} \right\|_2^2 + \lambda \frac{1}{N} \sum_{i=1}^{N} \left\| \mathbf{Q}^{(i)} + \mathbf{V}_{\text{pred}}^{(i)} \odot \left( \mathbf{B}\mathbf{V}_{\text{pred}}^{(i)} \right) \right\|_2^2
 $$
 
 where:
